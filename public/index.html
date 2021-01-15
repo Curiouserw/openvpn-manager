@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OpenVPN Manager</title>
+</head>
+<body>
+
+
+<script type="text/javascript">
+    let reg = /\\/g;
+    function getBytesSize(size) {//把字节转换成正常文件大小
+        if (!size)  return "";
+        var num = 1024.00; //byte
+        if (size < num)
+            return size + "B";
+        if (size < Math.pow(num, 2))
+            return (size / num).toFixed(2) + "KB"; //kb
+        if (size < Math.pow(num, 3))
+            return (size / Math.pow(num, 2)).toFixed(2) + "MB"; //M
+        if (size < Math.pow(num, 4))
+            return (size / Math.pow(num, 3)).toFixed(2) + "G"; //G
+        return (size / Math.pow(num, 4)).toFixed(2) + "T"; //T
+    }
+
+    function formatDuring(mss){
+        var days = parseInt(mss / ( 60 * 60 * 24));
+        var hours = parseInt((mss % ( 60 * 60 * 24)) / ( 60 * 60));
+        var minutes = parseInt((mss % ( 60 * 60)) / 60);
+        var seconds = (mss % 60) ;
+        return days + " 天 " + hours + " 小时 " + minutes + " 分钟 ";
+    }
+    function getOnlineClients() {
+        var ajaxObj = new XMLHttpRequest();
+        ajaxObj.open('get', '/getOnlineClients');
+        ajaxObj.send();
+        ajaxObj.onreadystatechange = function () {
+            if (ajaxObj.readyState == 4 && ajaxObj.status == 200) {
+                var originData = ajaxObj.responseText.replace(reg,'').substr(1)
+                var originJsonData = originData.substring(0,originData.length - 1)
+                var myObj = JSON.parse(originJsonData);
+                var txt = "";
+                for (let x=0;x < myObj.onlineclient.length;x++){
+                    var nowTs=parseInt(new Date().getTime()/1000)
+                    txt += "<tr>"
+                        + "<td>" + x + "</td>"
+                        + "<td>" + myObj.onlineclient[x].username + "</td>"
+                        + "<td>" + myObj.onlineclient[x].ip + "</td>"
+                        + "<td>" + myObj.onlineclient[x].port + "</td>"
+                        + "<td>" + myObj.onlineclient[x].v_ip + "</td>"
+                        + "<td>" + getBytesSize(myObj.onlineclient[x].received_bytes) + "</td>"
+                        + "<td>" + getBytesSize(myObj.onlineclient[x].sent_bytes) + "</td>"
+                        + "<td>" + formatDuring(nowTs - myObj.onlineclient[x].connected_since_timestamp) + "</td>"
+                        + "<td >" + "<button class='kickOutBtn' client_username='"+myObj.onlineclient[x].username+"' style='cursor: pointer' type='button'>下线该用户</button>" + "</td>"
+                        + "</tr>";
+                }
+                document.querySelector("#onlineClientsTable").insertAdjacentHTML('afterBegin',txt)
+            }
+        }
+    }
+    function kickOutClientByCN(userName) {
+
+        var ajaxObj = new XMLHttpRequest();
+        var formData = new FormData();
+        // console.log(formData);
+        formData.append("username", userName);
+        ajaxObj.open('post', "/kickOutClientByCN",false,);
+        ajaxObj.send(formData);
+    };
+    window.onload=function() {
+        getOnlineClients();
+        document.getElementById("onlineClientsTable").addEventListener('click', function (e) {
+            if(e.target.className === 'kickOutBtn') {
+                kickOutClientByCN(e.target.getAttribute('client_username'));
+            }
+        })
+    }
+</script>
+<h1 align="center">OpenVPN在线用户列表</h1>
+<table width="1300" height="100" border="2" cellpadding="15" cellspacing="0" align="center" >
+    <tr>  <th>ID</th>   <th>用户名</th> <th>客户端路由公网IP地址</th> <th>端口</th> <th>虚拟IP地址</th> <th>接收数据大小</th> <th>发送数据大小</th> <th>连接时间</th> <th>是否下线用户</th> </tr>
+    <tbody id="onlineClientsTable"> </tbody>
+</table>
+
+</body>
+</html>
