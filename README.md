@@ -37,7 +37,19 @@ go get github.com/rakyll/statik
 go install github.com/rakyll/statik
 statik -src=$PWD/public
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o openvpn-manager main.go 
-nohup ./openvpn-manager -host openvpn服务端主机IP地址 -port openvpn管理端口 -admin-passwd OpenVPN Manager管理员admin的密码 >> /var/log/openvpn-manager.log 2>&1 &
+nohup ./openvpn-manager -host openvpn服务端主机IP地址 -port openvpn管理端口 -admin-passwd OpenVPN Manager管理员admin的密码 -psw-file /etc/openvpn/server/psw-file >> /var/log/openvpn-manager.log 2>&1 &
+```
+
+## 3、docker方式部署
+
+```bash
+docker pull curiouser/openvpn-manager:v1
+docker run \
+-v $PWD/psw-file:/etc/openvpn/server/psw-file:ro \
+-p 30080:9090 \
+-it \
+curiouser/openvpn-manager:v1 \
+-host 172.16.1.2 -port 32099 -admin-passwd 12356789 -psw-file /etc/openvpn/server/psw-file
 ```
 
 # 四、TODO
@@ -46,4 +58,5 @@ nohup ./openvpn-manager -host openvpn服务端主机IP地址 -port openvpn管理
 - [ ] 增加显示最近五条登录日志
 - [ ] 增加新增用户的功能
 - [ ] 增加对低版本OpenVPN的支持
-- [ ] 增加Docker部署方式及二进制包下载集成
+- [x] 增加Docker部署方式
+- [x] 增加显示所有用户功能

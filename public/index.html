@@ -8,7 +8,6 @@
 
 
 <script type="text/javascript">
-    let reg = /\\/g;
     function getBytesSize(size) {//把字节转换成正常文件大小
         if (!size)  return "";
         var num = 1024.00; //byte
@@ -22,7 +21,6 @@
             return (size / Math.pow(num, 3)).toFixed(2) + "G"; //G
         return (size / Math.pow(num, 4)).toFixed(2) + "T"; //T
     }
-
     function formatDuring(mss){
         var days = parseInt(mss / ( 60 * 60 * 24));
         var hours = parseInt((mss % ( 60 * 60 * 24)) / ( 60 * 60));
@@ -34,11 +32,11 @@
         var ajaxObj = new XMLHttpRequest();
         ajaxObj.open('get', '/getOnlineClients');
         ajaxObj.send();
+        ajaxObj.responseType = 'json';
         ajaxObj.onreadystatechange = function () {
             if (ajaxObj.readyState == 4 && ajaxObj.status == 200) {
-                var originData = ajaxObj.responseText.replace(reg,'').substr(1)
-                var originJsonData = originData.substring(0,originData.length - 1)
-                var myObj = JSON.parse(originJsonData);
+                var res = this.response;
+                var myObj = JSON.parse(res);
                 var txt = "";
                 for (let x=0;x < myObj.onlineclient.length;x++){
                     var nowTs=parseInt(new Date().getTime()/1000)
@@ -67,8 +65,30 @@
         ajaxObj.open('post', "/kickOutClientByCN",false,);
         ajaxObj.send(formData);
     };
+    function getAllUsers(){
+        var xhr = new XMLHttpRequest();
+        xhr.open('get', "/getAllUsers");
+        xhr.send();
+        xhr.responseType = 'json';
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                var res = this.response;
+                var myObj = JSON.parse(res);
+                var usertxt = "";
+                for (let x=0;x < myObj.users.length;x++){
+                    usertxt += "<tr>"
+                        + "<td>" + (x+1) + "</td>"
+                        + "<td>" + myObj.users[x].username + "</td>"
+                        + "</tr>";
+                    console.log(myObj.users[x].username)
+                }
+                document.querySelector("#allusers").insertAdjacentHTML('afterBegin',usertxt)
+            }
+        }
+    }
     window.onload=function() {
         getOnlineClients();
+        getAllUsers();
         document.getElementById("onlineClientsTable").addEventListener('click', function (e) {
             if(e.target.className === 'kickOutBtn') {
                 kickOutClientByCN(e.target.getAttribute('client_username'));
@@ -76,10 +96,17 @@
         })
     }
 </script>
+
 <h1 align="center">OpenVPN在线用户列表</h1>
 <table width="1300" height="100" border="2" cellpadding="15" cellspacing="0" align="center" >
     <tr>  <th>ID</th>   <th>用户名</th> <th>客户端路由公网IP地址</th> <th>端口</th> <th>虚拟IP地址</th> <th>接收数据大小</th> <th>发送数据大小</th> <th>连接时间</th> <th>是否下线用户</th> </tr>
     <tbody id="onlineClientsTable"> </tbody>
+</table>
+
+<h1 align="center">所有用户列表</h1>
+<table width="100" height="100" border="2" cellpadding="15" cellspacing="0" align="center" >
+    <tr> <th></th>      <th>用户名</th> </tr>
+    <tbody id="allusers"> </tbody>
 </table>
 
 </body>
