@@ -33,11 +33,8 @@ OpenVPN的管理端口详细介绍文章，请参考：https://openvpn.net/commu
 ```bash
 git clone 
 cd openvpn-manager
-go get github.com/rakyll/statik
-go install github.com/rakyll/statik
-statik -src=$PWD/public
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o openvpn-manager main.go 
-nohup ./openvpn-manager -host openvpn服务端主机IP地址 -port openvpn管理端口 -admin-passwd OpenVPN Manager管理员admin的密码 -psw-file /etc/openvpn/server/psw-file >> /var/log/openvpn-manager.log 2>&1 &
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o target/openvpn-manager main.go 
+nohup ./target/openvpn-manager -host openvpn服务端主机IP地址 -port openvpn管理端口 -admin-passwd OpenVPN Manager管理员admin的密码 -psw-file /etc/openvpn/server/psw-file > /var/log/openvpn-manager.log 2>&1 &
 ```
 
 ## 3、docker方式部署

@@ -2,13 +2,11 @@
 package main
 
 import (
-	_ "curiouser.com/openvpn-manager/statik"
 	"encoding/csv"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/rakyll/statik/fs"
 	"io/ioutil"
 	"log"
 	"net"
@@ -93,19 +91,14 @@ func main() {
 		os.Exit(0)
 	}
 
-	statikFS, err := fs.New()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	//根路由设置首页跳转到'/public'加载'index.html'
 	router.GET("/", func(context *gin.Context) {
 		context.Request.URL.Path = "/public"
 		router.HandleContext(context)
 	})
 
-	authorizedRoute.StaticFS("/public", statikFS)
-	//authorizedRoute.StaticFS("/public",http.Dir("./public"))
+	// authorizedRoute.StaticFS("/public", statikFS)
+	authorizedRoute.StaticFS("/public",http.Dir("./public"))
 	authorizedRoute.StaticFile("/favicon.ico", "./public/favicon.ico")
 
 	authorizedRoute.GET("/getOnlineClients", func(context *gin.Context) {
