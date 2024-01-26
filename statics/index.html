@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OpenVPN Manager</title>
+    <script type="text/javascript" src="/js/jquery-3.6.4.min.js"></script>
+    <style>
+        table {
+            border: 2px solid black; /* 设置表格边框样式和颜色 */
+            border-collapse: collapse; /* 合并边框，确保边框不重叠 */
+            font-size: small;
+            margin: 0 auto; /* 在水平方向上居中显示表格 */
+        }
+        td, th {
+            border: 2px solid black; /* 设置单元格边框样式和颜色 */
+            text-align: center; /* 设置文本居中 */
+            padding: 8px; /* 设置内边距 */
+        }
+        .onlineuserstatustext {
+            color: aliceblue;
+            background-color: green; /* 设置背景颜色 */
+        }
+    </style>
+    <script>
+        function kickOutClientByCN(btnid) {
+            kusername = $('#tr_' + btnid +' td:eq(1)').data('username') ;
+            $.ajax({
+                url: "/kickOutClientByCN",
+                cache: false,
+                async: false,
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ username: kusername }),
+                timeout: 1000,
+                success: function (response) {
+                    var responseObject = JSON.parse(response);
+                    if (responseObject.status === "success") {
+                        $('#tr_' + btnid + ' td:eq(8)').text("offline").removeClass();
+                        $('#tr_' + btnid +' td:eq(9)').text("");
+                    } else {
+                        alert("下线用户失败，检查应用日志！");
+                    }
+                }
+            })
+        }
+    </script>
+</head>
+<body>
+    <h1 align="center">OpenVPN在线用户列表</h1>
+
+    <table id="user_tab" >
+        <thead>
+            <th>ID</th>
+            <th>用户名</th>
+            <th>角色</th>
+            <th>客户端IP地址:端口</th>
+            <th>虚拟IP地址</th>
+            <th>接收数据大小</th>
+            <th>发送数据大小</th>
+            <th>登录时间</th>
+            <th>连接时间</th>
+            <th>状态</th>
+            <th>操作</th>
+        </thead>
+        <tbody id="onlineClientsTabdy" >
+            {{range $index, $user := .Users}}
+                <tr id="tr_{{$index}}">
+                    <td>{{$index}}</td>
+                    <td data-username="{{$user.Username}}">{{$user.ChineseUsername}}</td>
+                    <td>{{$user.Role}}</td>
+                    {{if $user.IP}}
+                        {{ if $.SpecificIP }}
+                            {{if eq $user.IP $.SpecificIP }}
+                                <td>{{$user.IP}}:{{$user.Port}}</td>
+                            {{else}}
+                                <td style="background-color: red;">{{$user.IP}}:{{$user.Port}}</td>
+                            {{end}}
+                        {{else}}
+                            <td>{{$user.IP}}:{{$user.Port}}</td>
+                        {{end}}
+                    {{else}}
+                        <td></td>
+                    {{end}}
+                    <td>{{ $user.VIP }}</td>
+                    <td>{{ formatBytes $user.ReceivedBytes }}</td>
+                    <td>{{ if ne $user.SentBytes 0 }}
+                            {{ formatBytes $user.SentBytes }}
+                        {{ end }}
+                    </td>
+                    <td>{{ $user.LoginTime }}</td>
+                    <td>{{ $user.ConnectedTime }}</td>
+                    <td {{ if eq $user.Status "online" }}
+                            class="onlineuserstatustext"
+                        {{end}}
+                        >
+                        {{$user.Status}}
+                    </td>
+                    <td>
+                        {{ if eq $user.Status "online" }}
+                        <button id="btn_{{$index}}" onclick="kickOutClientByCN({{$index}})">下线该用户</button>
+                        {{end}}
+                    </td>
+                </tr>
+            {{end}}
+        </tbody>
+    </table>
+</body>
+</html>
